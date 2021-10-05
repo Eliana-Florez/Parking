@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import compression from "compression";
+import http from 'http';
 
 //import routes
 import usuarioRoutes from "./routes/usuarioRoutes";
@@ -14,6 +15,7 @@ class Server {
 
   constructor() {
     this.app = express();
+    this.app.use(express.urlencoded({extended: false}));
     this.config();
     this.routes();
   }
@@ -24,6 +26,16 @@ class Server {
     this.app.use(express.json());
     this.app.use(cors());
     this.app.use(compression());
+
+    this.app.use((req,res, next) =>{
+      res.header('Acces-Control-Allow-Origin', '*');
+      res.header('Acces-Control-Allow-Headers', 'origin, X-Requested-With,Content-Type,Accept, Authorization');
+      if (req.method === 'OPTIONS') {
+        res.header('Access-Control-Allow-Methods', 'GET PATCH DELETE POST');
+        return res.status(200).json({});
+    }
+    next();
+    });
   }
 
   public routes(): void {
@@ -34,7 +46,8 @@ class Server {
   }
 
   public start(): void {
-    this.app.listen(this.app.get("port"), () => {
+    const httpServer = http.createServer(this.app);
+    httpServer.listen(this.app.get("port"), () => {
       console.log("Server is listening on port ", this.app.get("port"));
     });
   }
